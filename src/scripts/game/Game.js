@@ -1,9 +1,11 @@
 import { Container } from "pixi.js";
 import { board } from "./Board";
 import { startScreen } from "./StartScreen";
+import { Gem } from "./Gem";
 
 const MAX_TIME = 60;
 const MATCH_THRESHOLD = 3;
+const GEM_SIZE = 80;
 
 class Game {
   constructor() {
@@ -26,8 +28,6 @@ class Game {
     this.gems = board.gems;
 
     app.stage.addChild(this.container);
-
-    console.log("matches: ", this.checkMatchGems());
   }
 
   onGemClick(gem) {
@@ -45,10 +45,10 @@ class Game {
     const tempX = gem1.gem.x;
     const tempY = gem1.gem.y;
     const index1 = this.gems.findIndex(
-      (gema) => gema.gem == gem1.gem && gema.type == gem1.type
+      (gem) => gem.gem == gem1.gem && gem.type == gem1.type
     );
     const index2 = this.gems.findIndex(
-      (gema) => gema.gem == gem2.gem && gema.type == gem2.type
+      (gem) => gem.gem == gem2.gem && gem.type == gem2.type
     );
 
     gem1.gem.x = gem2.gem.x;
@@ -60,6 +60,15 @@ class Game {
 
     this.gems[index1] = this.gems[index2];
     this.gems[index2] = tempIndex1Gem;
+
+    const matches = this.checkMatchGems();
+    if (matches.length) {
+      this.filterMatches(matches);
+    }
+
+    setTimeout(() => {
+      this.fillEmptyGaps();
+    }, 1000);
   }
 
   checkMatchGems() {
@@ -71,7 +80,7 @@ class Game {
         const currentGem = this.gems[x * board.size + y];
         const nextGem = this.gems[x * board.size + board.size + y];
 
-        if (currentGem.type === nextGem?.type) {
+        if (currentGem?.type === nextGem?.type) {
           matchCount++;
         } else {
           if (matchCount >= MATCH_THRESHOLD) {
@@ -90,7 +99,7 @@ class Game {
         const currentGem = this.gems[x * board.size + y];
         const nextGem = this.gems[x * board.size + y + 1];
 
-        if (currentGem.type === nextGem?.type) {
+        if (currentGem?.type === nextGem?.type) {
           matchCount++;
         } else {
           if (matchCount >= MATCH_THRESHOLD) {
@@ -104,6 +113,33 @@ class Game {
     }
 
     return matches;
+  }
+
+  filterMatches(matches) {
+    matches.forEach((gemData) => {
+      const index = this.gems.findIndex(
+        (gem) => gem.gem == gemData.gem && gem.type == gemData.type
+      );
+      // this.gems.splice(index, 1);
+      this.gems[index] = { gem: null, type: null };
+      board.container.removeChild(gemData.gem);
+    });
+  }
+
+  fillEmptyGaps() {
+    for (let x = 0; x < board.size; x++) {
+      for (let y = 0; y < board.size; y++) {
+        const current = this.gems[x * board.size + y];
+        if (current.gem === null && current.type === null) {
+          const newGem = new Gem({ x, y });
+          newGem.create(board.container);
+          this.gems[x * board.size + y] = {
+            gem: newGem.sprite,
+            type: newGem.type,
+          };
+        }
+      }
+    }
   }
 }
 
