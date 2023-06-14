@@ -31,12 +31,14 @@ export class Gem {
     gem.on("pointerdown", () =>
       container.emit("gem-pointer-down", { gem: gem, type: gemType })
     );
-    gem.on("pointerup", this.onGemRelease);
-    gem.on("pointerupoutside", this.onGemRelease);
-    gem.on("pointermove", this.onGemMove);
+    gem.on("pointerup", () => container.emit("gem-pointer-up"));
+    gem.on("pointerupoutside", () => container.emit("gem-pointer-up-outside"));
+    gem.on("pointermove", () => container.emit("gem-pointer-move"));
 
     container.addChild(gem);
   }
+
+  fallDown() {}
 
   onGemRelease() {}
 
