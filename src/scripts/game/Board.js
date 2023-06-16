@@ -1,5 +1,6 @@
 import { Container } from "pixi.js";
 import { Gem } from "./Gem";
+import { game } from "./Game";
 
 const BOARD_SIZE = 8;
 
@@ -9,17 +10,17 @@ class Board {
     this.size = BOARD_SIZE;
   }
 
-  create(gameContainer) {
+  create() {
     const gems = [];
     for (let x = 0; x < this.size; x++) {
       for (let y = 0; y < this.size; y++) {
         const gem = new Gem({ x, y });
-        gem.create(this.container);
+        gem.create();
         gems.push({ gem: gem.sprite, type: gem.type });
       }
     }
     this.gems = gems;
-    gameContainer.addChild(this.container);
+    game.container.addChild(this.container);
   }
 }
 

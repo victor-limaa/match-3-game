@@ -4,6 +4,6 @@ import { App } from "./scripts/system/App";
 
 App.run();
 
-startScreen.create(App.app, () => {
-  game.start(App.app);
+startScreen.create(() => {
+  game.start();
 });

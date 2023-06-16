@@ -2,40 +2,50 @@ import { Container } from "pixi.js";
 import { board } from "./Board";
 import { startScreen } from "./StartScreen";
 import { Gem } from "./Gem";
+import { App } from "../system/App";
 
-const MAX_TIME = 60;
+const MAX_TIME = 30;
 const MATCH_THRESHOLD = 3;
 const GEM_SIZE = 80;
-const MAX_SCORE = 30;
+const MAX_SCORE = 60;
 
 class Game {
   constructor() {
     this.container = new Container();
     this.gems = [];
     this.selectedGem = null;
+    this.targetGem = null;
     this.isDragging = false;
     this.score = 0;
     this.time = MAX_TIME;
-    this.gameOver = false;
-
+    this.interval = null;
+    this.gameOver = true;
     this.isFillingBoard = false;
 
     board.container.on("gem-pointer-down", this.onGemClick.bind(this));
+    board.container.on("gem-pointer-enter", this.onGemPointerEnter.bind(this));
+    board.container.on("gem-pointer-up", this.onGemRelease.bind(this));
+    board.container.on("gem-pointer-move", this.onGemMove.bind(this));
   }
 
-  start(app) {
-    startScreen.destroy(app);
-    board.create(this.container);
+  start() {
+    startScreen.destroy();
+    board.create();
     this.gems = board.gems;
     this.clearMatchWhenStart();
 
-    app.stage.addChild(this.container);
+    App.app.stage.addChild(this.container);
 
-    // app.ticker.add((time) => this.updateGame(app));
-    // app.ticker.start();
+    this.gameOver = false;
+    App.app.ticker.start();
+    App.app.ticker.add(() => this.updateGame());
+
+    this.interval = setInterval(() => {
+      this.time -= 1;
+    }, 1000);
   }
 
-  reset(app) {
+  reset() {
     this.gems.forEach((gemData) => {
       board.container.removeChild(gemData.gem);
     });
@@ -45,37 +55,45 @@ class Game {
     this.isDragging = false;
     this.score = 0;
     this.time = MAX_TIME;
-    this.gameOver = false;
+    this.gameOver = true;
 
-    this.start(app);
+    this.start();
   }
 
-  updateGame(app) {
+  updateGame() {
     if (this.gameOver) {
       return;
     }
 
-    if (this.time > 0) {
-      this.time -= app.ticker.elapsedMS / 1000;
-      if (this.time <= 0) {
-        this.time = 0;
-        this.endGame(app);
-      }
+    if (this.time <= 0) {
+      this.endGame(App.app);
     }
 
     if (this.score >= MAX_SCORE) {
-      this.endGame(app);
+      this.endGame(App.app);
     }
 
-    app.renderer.plugins.interaction.autoPreventDefault = false;
+    App.app.renderer.plugins.interaction.cursorStyles.default = this.isDragging
+      ? "grabbing"
+      : "default";
+
+    App.app.renderer.plugins.interaction.moveWhenInside = true;
+    App.app.renderer.plugins.interaction.autoPreventDefault = false;
   }
 
-  endGame(app) {
-    app.ticker.stop();
-    app.ticker.remove(this.updateGame);
+  endGame() {
+    App.app.ticker.stop();
+    App.app.ticker.remove(this.updateGame);
+    clearInterval(this.interval);
     this.gameOver = true;
-    window.confirm("Fim de jogo! Deseja reiniciar?") ? this.reset(app) : null;
+    window.confirm(
+      `Fim de jogo! \nSua pontuação é: ${this.score} \nDeseja reiniciar?`
+    )
+      ? this.reset(App.app)
+      : null;
   }
+
+  onGemPointerEnter(gem) {}
 
   onGemClick(gem) {
     if (this.isDragging || this.gameOver || this.isFillingBoard) {
@@ -83,29 +101,92 @@ class Game {
     }
 
     if (this.selectedGem) {
-      const isPossibleToMove = this.checkPossiblesMoves(this.selectedGem, gem);
+      this.targetGem = gem;
+    } else {
+      this.selectedGem = gem;
+      this.selectedGem.gem.scale.set(0.2);
+      this.selectedGemPreviousPosition = {
+        x: gem.gem.x,
+        y: gem.gem.y,
+      };
+
+      board.container.addChild(this.selectedGem.gem);
+    }
+
+    this.isDragging = true;
+  }
+
+  onGemRelease() {
+    if (!this.isDragging || this.gameOver) {
+      return;
+    }
+
+    this.isDragging = false;
+
+    const tempX = this.selectedGem.gem.x;
+    const tempY = this.selectedGem.gem.y;
+    this.selectedGem.gem.x = this.selectedGemPreviousPosition.x;
+    this.selectedGem.gem.y = this.selectedGemPreviousPosition.y;
+
+    if (!this.targetGem) this.targetGem = this.getGemByPosition(tempX, tempY);
+
+    if (this.targetGem.gem === this.selectedGem.gem) {
+      this.targetGem = null;
+      return;
+    }
+
+    if (this.selectedGem && this.targetGem) {
+      const isPossibleToMove = this.checkPossiblesMoves(
+        this.selectedGem,
+        this.targetGem
+      );
 
       if (isPossibleToMove) {
-        this.swapGem(this.selectedGem, gem);
+        this.swapGem(this.selectedGem, this.targetGem);
         this.selectedGem.gem.scale.set(0.155);
 
-        const isValidMove = this.checkIsValidMove(this.selectedGem, gem);
+        const isValidMove = this.checkIsValidMove(
+          this.selectedGem,
+          this.targetGem
+        );
 
         setTimeout(() => {
           isValidMove
             ? this.filterMatches(isValidMove)
-            : this.swapGem(this.selectedGem, gem);
+            : this.swapGem(this.selectedGem, this.targetGem);
           this.selectedGem = null;
-        }, 500);
+          this.targetGem = null;
+        }, 200);
       } else {
         this.selectedGem.gem.scale.set(0.155);
-        this.selectedGem = gem;
+        this.selectedGem.gem.x = this.selectedGemPreviousPosition.x;
+        this.selectedGem.gem.y = this.selectedGemPreviousPosition.y;
+
+        this.selectedGem = this.targetGem;
+        this.selectedGemPreviousPosition = {
+          x: this.targetGem.gem.x,
+          y: this.targetGem.gem.y,
+        };
         this.selectedGem.gem.scale.set(0.2);
       }
-    } else {
-      this.selectedGem = gem;
-      this.selectedGem.gem.scale.set(0.2);
     }
+  }
+
+  onGemMove(event) {
+    if (this.isDragging && this.selectedGem) {
+      const newPosition = event.data.getLocalPosition(App.app.stage);
+      this.selectedGem.gem.x = newPosition.x;
+      this.selectedGem.gem.y = newPosition.y;
+    }
+  }
+
+  getGemByPosition(x, y) {
+    for (const gemData of this.gems) {
+      if (gemData && gemData.gem.getBounds().contains(x, y)) {
+        return gemData;
+      }
+    }
+    return null;
   }
 
   checkIsValidMove(currentGem, targetGem) {
@@ -115,7 +196,6 @@ class Game {
         (data) => data.gem === currentGem.gem || data.gem === targetGem.gem
       );
       if (findGem) return matches;
-      else return false;
     }
     return false;
   }
@@ -210,6 +290,10 @@ class Game {
       return;
     }
 
+    if (!this.gameOver) {
+      this.score += matches.length;
+    }
+
     matches.forEach((gemData) => {
       const index = this.gems.findIndex((gem) => gem.gem === gemData.gem);
       this.gems[index] = { gem: null, type: null };
@@ -248,7 +332,7 @@ class Game {
       this.isFillingBoard = false;
       let matches = this.checkMatchGems();
       matches.length ? this.filterMatches(matches) : null;
-    }, 1000);
+    }, 600);
   }
 
   fallDownGemsInnerBoard() {
@@ -256,7 +340,7 @@ class Game {
       let hasGemY = [];
       for (let y = 0; y < board.size; y++) {
         const current = this.gems[x * board.size + y];
-        if (current.gem === null) {
+        if (current?.gem === null) {
           hasGemY.length &&
             hasGemY.forEach((gem) => {
               gem.gem.y = gem.gem.y + GEM_SIZE;
@@ -268,12 +352,12 @@ class Game {
 
       for (let y = board.size - 1; y >= 0; y--) {
         const current = this.gems[x * board.size + y];
-        if (current.gem === null) {
+        if (current?.gem === null) {
           for (let i = 0; i <= y; i++) {
             const currentGem = this.gems[x * board.size + i];
             const nextGem = this.gems[x * board.size + i + 1];
 
-            if (currentGem.gem && !nextGem.gem) {
+            if (currentGem?.gem && !nextGem.gem) {
               this.gems[x * board.size + i + 1] = currentGem;
               this.gems[x * board.size + i] = { gem: null, type: null };
             }

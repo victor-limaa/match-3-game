@@ -1,4 +1,5 @@
 import { Sprite, Texture } from "pixi.js";
+import { board } from "./Board";
 
 const MAX_GEM_TYPES = 5;
 const GEM_SIZE = 80;
@@ -11,7 +12,9 @@ export class Gem {
     };
   }
 
-  create(container) {
+  create() {
+    const container = board.container;
+
     const gem = new Sprite();
     const gemType = Math.floor(Math.random() * MAX_GEM_TYPES);
     gem.texture = Texture.from(`assets/gems/Gems_${gemType}.png`);
@@ -31,9 +34,15 @@ export class Gem {
     gem.on("pointerdown", () =>
       container.emit("gem-pointer-down", { gem: gem, type: gemType })
     );
+    gem.on("pointerenter", () =>
+      container.emit("gem-pointer-enter", { gem: gem, type: gemType })
+    );
     gem.on("pointerup", () => container.emit("gem-pointer-up"));
-    gem.on("pointerupoutside", () => container.emit("gem-pointer-up-outside"));
-    gem.on("pointermove", () => container.emit("gem-pointer-move"));
+    gem.on("pointerupoutside", () => container.emit("gem-pointer-up"));
+    gem.on("pointerenter", () =>
+      container.emit("gem-pointer-enter", { gem: gem, type: gemType })
+    );
+    gem.on("pointermove", (event) => container.emit("gem-pointer-move", event));
 
     container.addChild(gem);
   }
