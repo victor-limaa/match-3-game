@@ -10,6 +10,7 @@ Este é um jogo do estilo match-3 desenvolvido com Pixi.js como biblioteca princ
 - Configuração com npm: O projeto foi iniciado com npm, permitindo a fácil gestão das dependências e a instalação de pacotes adicionais.
 - Webpack com servidor de desenvolvimento: O Webpack foi configurado para fornecer um servidor com "fast refresh" para facilitar o desenvolvimento. Isso permite visualizar as alterações em tempo real, sem precisar reiniciar o servidor a cada modificação no código.
 - Suporte para recursos do ES6: O projeto utiliza recursos do ES6, como Classes, Arrow Functions e Importação/Exportação de Módulos, para escrever um código mais moderno e limpo.
+- Foi configurado neste projeto pipeline com Github Actions para a entrega continua do mesmo.
 - Demo disponível: Você pode experimentar uma demo do jogo no seguinte URL: [https://victor-limaa.github.io/match-3-game/](https://victor-limaa.github.io/match-3-game/)
 
 ## Executando localmente
@@ -21,8 +22,6 @@ Para executar o projeto localmente, siga as etapas abaixo:
 ```bash
 git clone https://github.com/victor-limaa/match-3-game.git
 ```
-
-git clone https://github.com/victor-limaa/match-3-game.git
 
 2. Navegue até o diretório do projeto:
 
