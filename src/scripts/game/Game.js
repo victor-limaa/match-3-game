@@ -4,10 +4,10 @@ import { startScreen } from "./StartScreen";
 import { Gem } from "./Gem";
 import { App } from "../system/App";
 
-const MAX_TIME = 30;
+const MAX_TIME = 60;
 const MATCH_THRESHOLD = 3;
 const GEM_SIZE = 80;
-const MAX_SCORE = 60;
+const MAX_SCORE = 160;
 
 class Game {
   constructor() {
@@ -23,7 +23,6 @@ class Game {
     this.isFillingBoard = false;
 
     board.container.on("gem-pointer-down", this.onGemClick.bind(this));
-    board.container.on("gem-pointer-enter", this.onGemPointerEnter.bind(this));
     board.container.on("gem-pointer-up", this.onGemRelease.bind(this));
     board.container.on("gem-pointer-move", this.onGemMove.bind(this));
   }
@@ -38,7 +37,7 @@ class Game {
 
     this.gameOver = false;
     App.app.ticker.start();
-    App.app.ticker.add(() => this.updateGame());
+    App.app.ticker.add(this.updateGame.bind(this));
 
     this.interval = setInterval(() => {
       this.time -= 1;
@@ -65,12 +64,8 @@ class Game {
       return;
     }
 
-    if (this.time <= 0) {
-      this.endGame(App.app);
-    }
-
-    if (this.score >= MAX_SCORE) {
-      this.endGame(App.app);
+    if (this.time <= 0 || this.score >= MAX_SCORE) {
+      this.endGame();
     }
 
     App.app.renderer.plugins.interaction.cursorStyles.default = this.isDragging
@@ -92,8 +87,6 @@ class Game {
       ? this.reset(App.app)
       : null;
   }
-
-  onGemPointerEnter(gem) {}
 
   onGemClick(gem) {
     if (this.isDragging || this.gameOver || this.isFillingBoard) {
@@ -117,20 +110,20 @@ class Game {
   }
 
   onGemRelease() {
-    if (!this.isDragging || this.gameOver) {
+    if (!this.isDragging || this.gameOver || this.isFillingBoard) {
       return;
     }
 
     this.isDragging = false;
 
-    const tempX = this.selectedGem.gem.x;
-    const tempY = this.selectedGem.gem.y;
+    const tempX = this.selectedGem?.gem.x;
+    const tempY = this.selectedGem?.gem.y;
     this.selectedGem.gem.x = this.selectedGemPreviousPosition.x;
     this.selectedGem.gem.y = this.selectedGemPreviousPosition.y;
 
     if (!this.targetGem) this.targetGem = this.getGemByPosition(tempX, tempY);
 
-    if (this.targetGem.gem === this.selectedGem.gem) {
+    if (this.targetGem?.gem === this.selectedGem?.gem) {
       this.targetGem = null;
       return;
     }
@@ -143,7 +136,7 @@ class Game {
 
       if (isPossibleToMove) {
         this.swapGem(this.selectedGem, this.targetGem);
-        this.selectedGem.gem.scale.set(0.155);
+        this.selectedGem?.gem.scale.set(0.155);
 
         const isValidMove = this.checkIsValidMove(
           this.selectedGem,
@@ -158,22 +151,22 @@ class Game {
           this.targetGem = null;
         }, 200);
       } else {
-        this.selectedGem.gem.scale.set(0.155);
+        this.selectedGem?.gem.scale.set(0.155);
         this.selectedGem.gem.x = this.selectedGemPreviousPosition.x;
         this.selectedGem.gem.y = this.selectedGemPreviousPosition.y;
 
         this.selectedGem = this.targetGem;
         this.selectedGemPreviousPosition = {
-          x: this.targetGem.gem.x,
-          y: this.targetGem.gem.y,
+          x: this.targetGem?.gem.x,
+          y: this.targetGem?.gem.y,
         };
-        this.selectedGem.gem.scale.set(0.2);
+        this.selectedGem?.gem.scale.set(0.2);
       }
     }
   }
 
   onGemMove(event) {
-    if (this.isDragging && this.selectedGem) {
+    if (this.isDragging && this.selectedGem && !this.isFillingBoard) {
       const newPosition = event.data.getLocalPosition(App.app.stage);
       this.selectedGem.gem.x = newPosition.x;
       this.selectedGem.gem.y = newPosition.y;
@@ -182,7 +175,7 @@ class Game {
 
   getGemByPosition(x, y) {
     for (const gemData of this.gems) {
-      if (gemData && gemData.gem.getBounds().contains(x, y)) {
+      if (gemData && gemData.gem?.getBounds().contains(x, y)) {
         return gemData;
       }
     }
@@ -191,6 +184,7 @@ class Game {
 
   checkIsValidMove(currentGem, targetGem) {
     const matches = this.checkMatchGems();
+
     if (matches.length) {
       const findGem = matches.find(
         (data) => data.gem === currentGem.gem || data.gem === targetGem.gem
@@ -267,7 +261,11 @@ class Game {
       let matchCount = 1;
       for (let y = 0; y < board.size; y++) {
         const currentGem = this.gems[x * board.size + y];
-        const nextYGem = this.gems[x * board.size + y + 1];
+        const nextGemIndex = x * board.size + y + 1;
+        const nextYGem =
+          nextGemIndex < (x + 1) * board.size
+            ? this.gems[nextGemIndex]
+            : { gem: null, type: null };
 
         if (currentGem?.type === nextYGem?.type) {
           matchCount++;
@@ -352,14 +350,17 @@ class Game {
 
       for (let y = board.size - 1; y >= 0; y--) {
         const current = this.gems[x * board.size + y];
+
         if (current?.gem === null) {
           for (let i = 0; i <= y; i++) {
             const currentGem = this.gems[x * board.size + i];
             const nextGem = this.gems[x * board.size + i + 1];
 
-            if (currentGem?.gem && !nextGem.gem) {
-              this.gems[x * board.size + i + 1] = currentGem;
-              this.gems[x * board.size + i] = { gem: null, type: null };
+            if (currentGem?.gem && nextGem) {
+              if (!nextGem.gem) {
+                this.gems[x * board.size + i + 1] = currentGem;
+                this.gems[x * board.size + i] = { gem: null, type: null };
+              }
             }
           }
         }
@@ -376,6 +377,7 @@ class Game {
     const targetGemIndex = this.gems.findIndex(
       (data) => data.gem === targetGem.gem
     );
+
     if (
       targetGemIndex === currentGemIndex + 1 ||
       targetGemIndex === currentGemIndex - 1 ||

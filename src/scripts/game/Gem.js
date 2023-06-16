@@ -34,24 +34,10 @@ export class Gem {
     gem.on("pointerdown", () =>
       container.emit("gem-pointer-down", { gem: gem, type: gemType })
     );
-    gem.on("pointerenter", () =>
-      container.emit("gem-pointer-enter", { gem: gem, type: gemType })
-    );
     gem.on("pointerup", () => container.emit("gem-pointer-up"));
     gem.on("pointerupoutside", () => container.emit("gem-pointer-up"));
-    gem.on("pointerenter", () =>
-      container.emit("gem-pointer-enter", { gem: gem, type: gemType })
-    );
     gem.on("pointermove", (event) => container.emit("gem-pointer-move", event));
 
     container.addChild(gem);
   }
-
-  fallDown() {}
-
-  onGemRelease() {}
-
-  onGemRelease() {}
-
-  onGemMove() {}
 }
