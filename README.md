@@ -1,90 +1,90 @@
 # Match-3 Game
 
-## Descrição
+## About
 
-Este é um jogo do estilo match-3 desenvolvido com Pixi.js como biblioteca principal. Nele, você precisa combinar três ou mais peças do mesmo tipo para eliminá-las e marcar pontos.
+This is a match-3 style game developed with Pixi.js as the main library. In it, you need to combine three or more pieces of the same type to eliminate them and score points. The game ends when you score a total of 160 points, or reach the 60 second time limit.
 
-## Características principais
+## Main features
 
-- Desenvolvido com Pixi.js: A biblioteca Pixi.js é utilizada como base para a criação do jogo, oferecendo uma renderização rápida e eficiente.
-- Configuração com npm: O projeto foi iniciado com npm, permitindo a fácil gestão das dependências e a instalação de pacotes adicionais.
-- Webpack com servidor de desenvolvimento: O Webpack foi configurado para fornecer um servidor com "fast refresh" para facilitar o desenvolvimento. Isso permite visualizar as alterações em tempo real, sem precisar reiniciar o servidor a cada modificação no código.
-- Suporte para recursos do ES6: O projeto utiliza recursos do ES6, como Classes, Arrow Functions e Importação/Exportação de Módulos, para escrever um código mais moderno e limpo.
-- Foi configurado neste projeto pipeline com Github Actions para a entrega continua do mesmo.
-- Demo disponível: Você pode experimentar uma demo do jogo no seguinte URL: [https://victor-limaa.github.io/match-3-game/](https://victor-limaa.github.io/match-3-game/)
+- Developed with Pixi.js: The Pixi.js library is used as the basis for creating the game, offering fast and efficient rendering.
+- Configuration with npm: The project was started with npm, allowing easy management of dependencies and installation of additional packages.
+- Webpack with development server: Webpack was configured to provide a "fast refresh" server to facilitate development. This allows you to view changes in real time, without having to restart the server with each code modification.
+- Support for ES6 features: The project uses ES6 features such as Classes, Arrow Functions and Module Import/Export to write more modern and cleaner code.
+- It was configured in this project pipeline with Github Actions for its continuous delivery.
+- Demo available: You can try a demo of the game at the following URL: [https://victor-limaa.github.io/match-3-game/](https://victor-limaa.github.io/match-3-game/)
 
-## Executando localmente
+## Running locally
 
-Para executar o projeto localmente, siga as etapas abaixo:
+To run the project locally, follow the steps below:
 
-1. Clone o repositório usando o comando:
+1. Clone the repository using the command:
 
 ```bash
 git clone https://github.com/victor-limaa/match-3-game.git
 ```
 
-2. Navegue até o diretório do projeto:
+2. Navigate to the project directory:
 
 ```bash
 cd match-3-game
 ```
 
-3. Instale as dependências usando npm ou yarn:
+3. Install dependencies using npm or yarn:
 
 ```bash
 npm install
 ```
 
-ou
+or
 
 ```bash
 yarn install
 ```
 
-4. Inicie o servidor de desenvolvimento:
+4. Start the development server:
 
 ```bash
 npm start
 ```
 
-ou
+or
 
 ```bash
 yarn start
 ```
 
-5. Abra o navegador e acesse:
+5. Open your browser and go to:
 
 ```
 http://localhost:3000
 ```
 
-## Gerando um build
+## Generating a build
 
-Se você deseja gerar um build para exportação, siga as etapas abaixo:
+If you want to generate a build for export, follow the steps below:
 
-1. Certifique-se de ter as dependências instaladas usando npm ou yarn:
+1. Make sure you have the dependencies installed using npm or yarn:
 
 ```bash
 npm install
 ```
 
-ou
+or
 
 ```bash
 yarn install
 ```
 
-2. Execute o comando para gerar o bundle do JavaScript na pasta "dist":
+2. Run the command to generate the JavaScript bundle in the "dist" folder:
 
 ```bash
 npm run build
 ```
 
-ou
+or
 
 ```bash
 yarn run build
 ```
 
-3. O bundle estará disponível na pasta "dist" e poderá ser implantado em um servidor web.
+3. The bundle will be available in the "dist" folder and can be deployed on a web server.
